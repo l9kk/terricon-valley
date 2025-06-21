@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "eoz-procurement-risk"
+version = "0.1.0"
+description = "AI-powered procurement corruption detection system for Kazakhstan's EOZ portal"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+httpx = {extras = ["http2"], version = "^0.28.1"}
+asyncio-throttle = "^1.0.2"
+tqdm = "^4.66.0"
+pandas = "^2.2.0"
+polars = "^0.20.0"
+pyarrow = "^15.0.0"
+duckdb = "^0.10.0"
+scikit-learn = "^1.4.0"
+streamlit = "^1.31.0"
+structlog = "^23.2.0"
+python-dotenv = "^1.0.0"
+numpy = "^1.26.0"
+plotly = "^5.17.0"
+scipy = "^1.15.3"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.0.0"
+pytest = "^8.0.0"
+pytest-asyncio = "^0.23.0"
+mypy = "^1.8.0"
+
+[tool.poetry.scripts]
+eoz-scraper = "src.__main__:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
