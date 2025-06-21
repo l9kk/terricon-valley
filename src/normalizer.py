@@ -147,7 +147,10 @@ class DataNormalizer:
             string_columns = [
                 col
                 for col in df.columns
-                if any(x in col.lower() for x in ["bin", "title", "name", "description", "platform"])
+                if any(
+                    x in col.lower()
+                    for x in ["bin", "title", "name", "description", "platform"]
+                )
             ]
             for col in string_columns:
                 if col in df.columns:
