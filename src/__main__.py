@@ -158,6 +158,29 @@ async def join_datasets() -> None:
         print(f"❌ Error: {e}")
 
 
+async def run_plan_scraper() -> None:
+    """Run the fast Plan object scraper (using existing pages)."""
+    from .plan_scraper import PlanScraper
+
+    logger.info("Starting Plan object scraping from existing pages")
+
+    scraper = PlanScraper()
+    result = await scraper.scrape_plans()
+
+    logger.info("Plan object scraping completed successfully", **result)
+
+    # Print summary
+    print("\n=== Plan Object Scraping Summary ===")
+    print(f"✅ Pages loaded: {result['pages']}")
+    print(f"✅ Objects fetched: {result['objects']}")
+    print(f"✅ Total records: {result['total_records']:,}")
+    print(f"📁 Objects saved to: raw/objects/Plan/")
+    
+    if result['objects'] > 0:
+        success_rate = (result['objects'] / result['total_records']) * 100
+        print(f"📊 Success rate: {success_rate:.1f}%")
+
+
 def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(description="EOZ Procurement-Risk Dataset Builder")
@@ -184,6 +207,11 @@ def main() -> None:
         "dashboard", help="Launch Streamlit dashboard"
     )
 
+    # Plan scraper command
+    plan_parser = subparsers.add_parser(
+        "scrape-plans", help="Scrape Plan objects from existing pages (fast)"
+    )
+
     # Parse arguments
     args = parser.parse_args()
 
@@ -195,6 +223,8 @@ def main() -> None:
         asyncio.run(join_datasets())
     elif args.command == "dashboard":
         run_dashboard()
+    elif args.command == "scrape-plans":
+        asyncio.run(run_plan_scraper())
     else:
         parser.print_help()
         sys.exit(1)

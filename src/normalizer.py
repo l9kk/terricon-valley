@@ -134,7 +134,11 @@ class DataNormalizer:
             numeric_columns = [
                 col
                 for col in df.columns
-                if any(x in col.lower() for x in ["price", "amount", "sum", "id"])
+                if any(x in col.lower() for x in ["price", "amount", "_sum", "_id"])
+                and not any(
+                    exclude in col.lower()
+                    for exclude in ["name", "title", "description", "platform"]
+                )
             ]
             for col in numeric_columns:
                 if col in df.columns and not col.endswith("_id"):
@@ -143,7 +147,8 @@ class DataNormalizer:
                     # IDs should be strings to preserve leading zeros
                     df[col] = df[col].astype(str)
 
-            # String columns
+            # String columns - let pandas handle string columns naturally
+            # Don't force conversion to string as it can corrupt data
             string_columns = [
                 col
                 for col in df.columns
@@ -152,8 +157,9 @@ class DataNormalizer:
                     for x in ["bin", "title", "name", "description", "platform"]
                 )
             ]
+            # Only ensure BIN columns are strings (they should be treated as categorical data)
             for col in string_columns:
-                if col in df.columns:
+                if col in df.columns and "bin" in col.lower():
                     df[col] = df[col].astype(str)
 
         except Exception as e:

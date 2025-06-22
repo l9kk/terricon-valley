@@ -338,46 +338,65 @@ poetry run python -m src join
 
 **Status**: ✅ COMPLETED - Unified procurement dataset ready for feature engineering and ML modeling
 
-## 2025-06-21 - Powerhouse OrderDetail Processor Implementation
+# Provider Name Debug Session - Sat Jun 21 22:17:07 +05 2025
 
-Created ultra-high performance OrderDetail processor optimized for 128GB RAM + RTX 5090 hardware:
+## Issue Found
+Provider names showing as 'nan' in OrderDetail CSV despite being present in JSON files.
 
-### New Files Created:
-- `src/powerhouse_orderdetail_processor.py` - Ultra-high performance OrderDetail scraper
-- `run_powerhouse.py` - Standalone runner script
+## Investigation Results:
+- JSON files contain valid provider.nameru values
+- pandas.json_normalize works correctly
+- Column mapping is correct
+- Issue appears to be in data type conversion
 
-### Key Features Implemented:
-- **Extreme Concurrency**: 500 concurrent object requests (vs 100 in standard version)
-- **Memory Optimization**: 100K record batches leveraging 128GB RAM
-- **Ultra-Fast JSON**: orjson library for maximum parsing speed  
-- **Advanced Rate Limiting**: 1000 requests/second capability
-- **Memory Management**: Automatic cleanup with 100GB threshold monitoring
-- **Raw Data Storage**: All JSONs saved to raw/pages/ and raw/objects/ folders
-- **CSV Output**: Optimized CSV generation in dataset/ folder
-- **Performance Monitoring**: Real-time stats and memory usage tracking
+## Next Action Required:
+Fix convert_data_types function or column selection logic in normalizer.py
 
-### Technical Specifications:
-- **Max Concurrent Objects**: 500 simultaneous requests
-- **Batch Size**: 100,000 records per processing batch
-- **Memory Threshold**: 100GB cleanup trigger
-- **Target Performance**: 1000+ requests/second sustained
-- **Output Format**: CSV with optimized column mapping
-- **JSON Storage**: All raw data preserved in raw/ structure
 
-### Dependencies Added:
-- `orjson = "^3.9.0"` - Ultra-fast JSON parsing
-- `psutil = "^5.9.0"` - Memory monitoring
+# ISSUE RESOLVED - Sat Jun 21 22:35:57 +05 2025
 
-### Hardware Optimization:
-- Designed for 128GB RAM utilization
-- HTTP/2 enabled for better connection efficiency  
-- Connection pooling with 2000 max connections
-- Memory-mapped file operations where beneficial
-- Aggressive garbage collection strategies
+## Root Cause Found
+The provider names were showing as 'nan' because the numeric column detection logic was incorrectly identifying 'provider_name_ru' as a numeric column. The substring 'ru' in 'provider_name_ru' was matching 'ru' in 'sum' from the pattern ['price', 'amount', 'sum', 'id'].
 
-### Usage:
+## Fix Applied
+Changed numeric column detection from:
+- OLD: any(x in col.lower() for x in ['price', 'amount', 'sum', 'id'])
+- NEW: any(x in col.lower() for x in ['price', 'amount', '_sum', '_id']) and not any(exclude in col.lower() for exclude in ['name', 'title', 'description', 'platform'])
+
+This prevents text columns containing 'name' from being processed as numeric columns.
+
+## Status
+- ✅ Issue identified and fixed in src/normalizer.py
+- ⏳ Need to regenerate OrderDetail CSV to verify fix
+
+## 2025-06-22: Fast Plan Object Scraper (Pages Already Exist)
+
+**Objective**: Scrape Plan objects only, using existing page files to extract IDs
+
+**Modified Implementation**:
+1. **Updated `src/plan_scraper.py`**:
+   - Removed page fetching functionality
+   - Added `load_existing_plan_pages()` to read from `raw/pages/Plan/*.json`
+   - Modified `scrape_plans()` to use existing pages instead of fetching new ones
+   - Automatic page file discovery (0.json, 1.json, etc.)
+   - Enhanced error handling for missing page files
+
+2. **Updated CLI Integration**:
+   - Command now focused on object scraping: `python -m src scrape-plans`
+   - Updated help text and status messages
+   - Added success rate calculation
+
+**Technical Details**:
+- **Input**: Existing page files in `raw/pages/Plan/`
+- **Process**: Extract `id` fields from pages → fetch objects using `/get/object`
+- **Output**: Plan objects saved to `raw/objects/Plan/{id}.json`
+- **Performance**: Still ultra-fast (150 concurrent) but focused only on objects
+- **Smart Skip**: Checks for existing object files to avoid re-downloading
+
+**Usage**:
 ```bash
-python run_powerhouse.py
+python -m src scrape-plans
 ```
 
-This creates a specialized high-performance pipeline focused exclusively on OrderDetail data.
+**Status**: Ready for object-only scraping ✅
+
